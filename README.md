@@ -107,7 +107,7 @@ A Hxro Dexterity Components Repo will be released in the near future to house a 
 The scaffold project structure may vary based on the front-end framework being utilized. Below is an example structure for the Next js Scaffold.
 
 ```
-├── public : publically hosted files
+├── public : publicly hosted files
 ├── src : primary code folders and files
 │   ├── components: should house anything considered a reusable UI component
 │   ├── contexts`: any context considered reusable and useful to many components that can be passed down through a component tree
