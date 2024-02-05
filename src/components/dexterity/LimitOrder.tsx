@@ -26,13 +26,51 @@ export const PlaceLimitOrder: FC = () => {
         onGotBlockHashFn: () => {},
         onConfirm: (txn: string) => notify({ type: 'success', message: 'Order Placed Successfully!', txid: txn })
     }
-
-    const handlePlaceOrder = useCallback(async () => {
+const handlePlaceOrder = useCallback(async () => {
         if (!price || !size || !publicKey || !manifest || !selectedProduct) return;
 
-        // Placing order logic goes here
+        const priceFraction = dexterity.Fractional.New(price, 0);
+        const sizeFraction = dexterity.Fractional.New(size * 10 ** selectedProduct.exponent, selectedProduct.exponent);
+        const referralTrg = network === 'devnet' ? process.env.NEXT_PUBLIC_REFERRER_TRG_DEVNET! : process.env.NEXT_PUBLIC_REFERRER_TRG_MAINNET!
+        const referralFee = process.env.NEXT_PUBLIC_REFERRER_BPS
+
+        try {
+            setIsLoading(true);
+
+            // Get New Order Instruction
+            const orderIx = trader.getNewOrderIx(
+                selectedProduct.index,
+                orderType === 'Short' ? false : true,
+                priceFraction,
+                sizeFraction,
+                false,
+                referralTrg ? new PublicKey(referralTrg) : null,
+                referralFee ? Number(referralFee) : null,
+                null,
+                null
+            );
+           // Get Products Array prices 
+           const products = Array.from(dexterity.Manifest.GetProductsOfMPG(trader.mpg));
+           // Get Update Products Mark Prices Instruction
+           const updateMarkIx = trader.getUpdateMarkPricesIx(products); 
+
+            // Submit the bundled instructions 
+            // (updateMarkIx has to be first in the array)
+            await trader.sendTx([updateMarkIx, orderIx], null);
+
+            setIsSuccess(true);
+        } catch (error: any) {
+            setIsSuccess(false);
+            notify({ type: 'error', message: 'Placing order failed!', description: error?.message });
+            console.error(error)
+        } finally {
+            notify({ type: 'success', message: `Limit ${orderType} Order Placed Successfully!` });
+            setIsLoading(false);
+        }
 
     }, [price, size, orderType, publicKey, manifest, trader, selectedProduct]);
+
+    
 
     const isFormValid = useMemo(() => price !== null && size !== null && orderType !== 'None', [price, size, orderType]);
 

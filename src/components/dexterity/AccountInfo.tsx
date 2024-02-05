@@ -44,6 +44,7 @@ export const AccountInfo: FC = () => {
         }
 
     }, [updateAccountInfo]);
+    
 
     return (
         <>
