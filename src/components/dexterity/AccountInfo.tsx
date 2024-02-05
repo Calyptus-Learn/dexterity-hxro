@@ -22,16 +22,29 @@ export const AccountInfo: FC = () => {
 
     const updateAccountInfo = useCallback(async () => {
         if (!trader) return;
+        const cashBalance = trader.getCashBalance().toDecimal()
+        const portfolioValue = trader.getPortfolioValue().toDecimal()
+        const orderData = Array.from(await Promise.all(trader.getOpenOrders([selectedProduct.name])))
 
-        // Fetch & Update Trader Account information
+        setCashBalance(cashBalance)
+        setPortfolioValue(portfolioValue)
+        setOrderData(orderData)
 
-    }, [trader, selectedProduct]); // Removed markPrice and indexPrice
+        setUpdated(true)
+        setLastUpdated(Date.now())
+
+    }, [trader, selectedProduct]);
 
     useEffect(() => {
 
-        // Stream Trader Account Information
+        trader.connect(updateAccountInfo, updateAccountInfo)
+
+        return () => {
+            trader.disconnect()
+        }
 
     }, [updateAccountInfo]);
+    
 
     return (
         <>
