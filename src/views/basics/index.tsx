@@ -22,16 +22,28 @@ export const BasicsView: FC = ({ }) => {
   const { networkConfiguration } = useNetworkConfiguration();
   const network = networkConfiguration as WalletAdapterNetwork;
 
-  useMemo(async () => {
+ useMemo(async () => {
     if (!publicKey) return
     const rpc =
       network == 'devnet' ? process.env.NEXT_PUBLIC_DEVNET_RPC! :
         network == 'mainnet-beta' ? process.env.NEXT_PUBLIC_MAINNET_RPC! :
           clusterApiUrl(network)
+	
+		// Constructing our DexterityWallet from the Solana Wallet Adapter
+		const wallet: DexterityWallet = {
+      publicKey: publicKey!,
+      signTransaction,
+      signAllTransactions,
+    }
 
-    // Fetch for the Manifest
+		// Fetching the Manifest
+		const manifest = await dexterity.getManifest(rpc, true, wallet)
+
+		// Setting our Manifest with our Global Context
+		setManifest(manifest)
 
   }, [publicKey, network]);
+
 
   useEffect(() => { }, [trader, setIndexPrice, setMarkPrice])
 
